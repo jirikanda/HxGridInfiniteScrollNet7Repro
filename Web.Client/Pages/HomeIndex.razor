@@ -1,3 +1,32 @@
 ﻿@attribute [Route(Routes.Home)]
 
-Hello world!
+@using Havit.NewProjectTemplate.Contracts;
+
+<HxGrid TItem="CountryVM" DataProvider="GetCountriesAsync" ContentNavigationMode="GridContentNavigationMode.InfiniteScroll" OverscanCount="10">
+    <Columns>
+        <HxGridColumn HeaderText="Id" ItemTextSelector="item => item.Id.ToString()" />
+        <HxGridColumn HeaderText="ISO code" ItemTextSelector="item => item.IsoCode" />
+    </Columns>
+</HxGrid>
+
+@code
+{
+    [Inject] protected ICountryFacade CountryFacade { get; set; }
+
+    public async Task<GridDataProviderResult<CountryVM>> GetCountriesAsync(GridDataProviderRequest<CountryVM> request)
+    {
+        DataFragmentRequest<CountryVM> dataFragmentRequest = new()
+            {
+                StartIndex = request.StartIndex,
+                Count = request.Count
+            };
+
+        var result = await CountryFacade.GetCountriesAsync(dataFragmentRequest, request.CancellationToken);
+
+        return new()
+            {
+                Data = result.Data,
+                TotalCount = result.TotalCount
+            };
+    }
+}
