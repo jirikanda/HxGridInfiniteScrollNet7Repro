@@ -1,19 +1,39 @@
 ﻿@attribute [Route(Routes.Home)]
 
 @using Havit.NewProjectTemplate.Contracts;
-
+@*
 <HxGrid TItem="CountryVM" DataProvider="GetCountriesAsync" ContentNavigationMode="GridContentNavigationMode.InfiniteScroll" OverscanCount="10">
     <Columns>
         <HxGridColumn HeaderText="Id" ItemTextSelector="item => item.Id.ToString()" />
         <HxGridColumn HeaderText="ISO code" ItemTextSelector="item => item.IsoCode" />
     </Columns>
-</HxGrid>
+</HxGrid>*@
+
+<Virtualize TItem="CountryVM" ItemsProvider="GetDataAsync">
+    <p>@context.IsoCode</p>
+</Virtualize>
 
 @code
 {
-    [Inject] protected ICountryFacade CountryFacade { get; set; }
+        [Inject] protected ICountryFacade CountryFacade { get; set; }
+        [Inject] protected HttpClient HttpClient { get; set; }
 
-    public async Task<GridDataProviderResult<CountryVM>> GetCountriesAsync(GridDataProviderRequest<CountryVM> request)
+        public async ValueTask<ItemsProviderResult<CountryVM>> GetDataAsync(ItemsProviderRequest request)
+        {
+            DataFragmentRequest<CountryVM> dataFragmentRequest = new()
+            {
+                StartIndex = request.StartIndex,
+                Count = request.Count
+            };
+
+          //  await HttpClient.GetAsync("/slow", request.CancellationToken);
+          // return new ItemsProviderResult<CountryVM>(Enumerable.Repeat(new CountryVM { IsoCode = "Iso..." }, request.Count), 1000);
+
+            var result = await CountryFacade.GetCountriesAsync(dataFragmentRequest, request.CancellationToken);
+            return new ItemsProviderResult<CountryVM>(result.Data, result.TotalCount);
+    }
+
+   public async Task<GridDataProviderResult<CountryVM>> GetCountriesAsync(GridDataProviderRequest<CountryVM> request)
     {
         DataFragmentRequest<CountryVM> dataFragmentRequest = new()
             {
